@@ -4,6 +4,9 @@ import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import StatCard from '../../components/StatCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import CustomerSegments from '../../components/CustomerSegments';
+import RecommendationWidget from '../../components/RecommendationWidget';
+import AnalyticsValidation from '../../components/AnalyticsValidation';
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
@@ -135,10 +138,15 @@ export default function VendorAnalytics() {
       )}
 
       {/* Note about time-series */}
-      <p style={{ fontSize: '0.8125rem', color: '#94A3B8', marginTop: '1rem' }}>
+      <p style={{ fontSize: '0.8125rem', color: '#94A3B8', marginTop: '1rem', marginBottom: '1.5rem' }}>
         Analytics show aggregate totals from all completed transactions.
-        Time-series breakdown will be available in a future update.
       </p>
+
+      {/* ==================== MILESTONE 2 ANALYTICS SECTIONS ==================== */}
+      <CustomerSegments />
+      <RecommendationWidget />
+      <AnalyticsValidation />
+      {/* ======================================================================= */}
     </div>
   );
 }

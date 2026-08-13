@@ -11,6 +11,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import AIAssistantPanel from '../../components/AIAssistantPanel';
 import CatalogQualityScore from '../../components/CatalogQualityScore';
 import AIInsightsWidget from '../../components/AIInsightsWidget';
+import LowStockAlert from '../../components/LowStockAlert';
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
@@ -183,6 +184,9 @@ export default function VendorDashboard() {
           <StatCard key={card.label} {...card} />
         ))}
       </div>
+
+      {/* Low Stock Alerts */}
+      <LowStockAlert />
 
       {/* AI Insights Widget */}
       {products.length > 0 && (

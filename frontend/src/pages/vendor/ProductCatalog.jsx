@@ -5,6 +5,8 @@ import api from '../../api/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import InventorySummary from '../../components/InventorySummary';
+import LowStockAlert from '../../components/LowStockAlert';
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
@@ -116,6 +118,11 @@ export default function ProductCatalog() {
           Add Product
         </Link>
       </div>
+
+      {/* ==================== MILESTONE 2 — INVENTORY INTELLIGENCE ==================== */}
+      <InventorySummary />
+      <LowStockAlert />
+      {/* ============================================================================= */}
 
       {/* Table card */}
       <div className="card">

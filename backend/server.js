@@ -34,10 +34,22 @@ const transactionRoutes = require("./routes/transactionRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
 
+// ==================== MILESTONE 2 ROUTES ====================
+
+// Import inventory routes (Milestone 2 - Requirement 1)
+const inventoryRoutes = require("./routes/inventoryRoutes");
+
+// Import analytics routes (Milestone 2 - Requirement 2 & 4)
+const analyticsRoutes = require("./routes/analyticsRoutes");
+
+// Import recommendation routes (Milestone 2 - Requirement 3)
+const recommendationRoutes = require("./routes/recommendationRoutes");
+
+
 // ==================== ENVIRONMENT CONFIGURATION ====================
 
 // Load environment variables from the .env file
-dotenv.config();
+//dotenv.config();
 
 
 // ==================== DATABASE CONNECTION ====================
@@ -77,6 +89,17 @@ app.use("/api/products", productRoutes);
 app.use("/api/transactions", transactionRoutes);
 
 app.use("/api/ai", aiRoutes);
+
+// ==================== MILESTONE 2 API ROUTES ====================
+
+// Inventory tracking APIs
+app.use("/api/inventory", inventoryRoutes);
+
+// Analytics APIs (customer segmentation, validation)
+app.use("/api/analytics", analyticsRoutes);
+
+// Rule-based recommendation APIs
+app.use("/api/recommendations", recommendationRoutes);
 // ==================== TEST ROUTE ====================
 
 // Simple route to check whether the ShopSense backend is running
