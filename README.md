@@ -340,5 +340,159 @@ This project is developed for academic and learning purposes.
 - JWT Authentication
 
 ---
+# ShopSense — AI-Powered Marketplace with Vendor Analytics
+
+ShopSense is a vendor-focused marketplace platform that combines product management, inventory monitoring, business analytics, customer insights and AI-assisted product content generation.
+
+The project was developed incrementally across multiple milestones.
+
+---
+
+## 🚀 Project Overview
+
+ShopSense helps vendors manage their marketplace operations through a centralized dashboard.
+
+The platform provides:
+
+- Secure vendor authentication
+- Product catalog management
+- Inventory and stock monitoring
+- Sales analytics
+- Customer segmentation
+- Rule-based product recommendations
+- Inventory intelligence
+- ML-based demand forecasting
+- AI-assisted product content generation
+
+---
+
+# 📌 Milestone 1 — Marketplace Foundation & AI Features
+
+Milestone 1 focused on establishing the secure marketplace foundation.
+
+### 🔐 Authentication & Authorization
+
+- Vendor registration and login
+- JWT-based authentication
+- Password hashing using bcrypt
+- Role-based access control
+- Protected routes
+
+### 📦 Product Management
+
+- Add products
+- Edit products
+- Delete products
+- Product catalog
+- Product images
+- Product categories
+- Pricing and stock quantity
+- Vendor profile management
+
+### 📊 Vendor & Admin Dashboards
+
+- Vendor dashboard
+- Admin dashboard
+- Vendor management
+- Sales analytics foundation
+- Product and inventory visibility
+
+### 🤖 Gemini AI Features
+
+Google Gemini is integrated to assist vendors with:
+
+- Product description generation
+- SEO keyword suggestions
+- Product tags
+- AI catalog insights
+- SEO scoring
+- Catalog quality scoring
+- AI assistant functionality
+
+---
+
+# 📈 Milestone 2 — Inventory Intelligence & Customer Analytics
+
+Milestone 2 extends the marketplace foundation with analytics, customer intelligence, recommendations and predictive inventory planning.
+
+## 📦 Inventory Intelligence
+
+The existing product stock quantity is used as the inventory source of truth.
+
+Features include:
+
+- Current stock visibility
+- Inventory summary
+- Low-stock detection
+- Out-of-stock detection
+- Low-stock alerts
+- Inventory planning support
+
+---
+
+## 👥 Customer Segmentation
+
+Customers are grouped according to their total spending calculated from completed transactions.
+
+### Customer segments
+
+- VIP
+- High Value
+- Regular
+- Low Value
+
+This helps vendors understand customer spending behaviour and customer value.
+
+---
+
+## 🛍️ Rule-Based Recommendations
+
+ShopSense provides category-based product recommendations using historical sales data.
+
+### Process
+
+1. Select a product category
+2. Analyze completed transactions
+3. Calculate product sales
+4. Rank products by units sold
+5. Display top-selling products
+
+This recommendation system is **rule-based** and does not use an LLM.
+
+---
+
+## ✅ Analytical Validation
+
+Analytical results are cross-checked against the underlying MongoDB data.
+
+Validation covers:
+
+- Inventory calculations
+- Customer segmentation
+- Product recommendations
+- Historical transaction analysis
+
+The validation system helps ensure that displayed analytics correspond to the actual stored data.
+
+---
+
+# 🔮 ML Inventory Demand Forecasting
+
+ShopSense includes an advanced time-series demand forecasting feature.
+
+### Forecasting workflow
+
+```text
+Historical Completed Transactions
+              ↓
+       Daily Sales Data
+              ↓
+    Time-Series Forecasting
+              ↓
+       Predicted Demand
+              ↓
+      Compare With Stock
+              ↓
+    Restock Recommendation
 
 ## ⭐ If you like this project, consider giving it a star on GitHub!
