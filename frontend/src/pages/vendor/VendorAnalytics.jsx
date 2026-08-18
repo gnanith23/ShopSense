@@ -6,6 +6,7 @@ import StatCard from '../../components/StatCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import CustomerSegments from '../../components/CustomerSegments';
 import RecommendationWidget from '../../components/RecommendationWidget';
+import InventoryForecast from '../../components/InventoryForecast';
 import AnalyticsValidation from '../../components/AnalyticsValidation';
 
 function formatCurrency(amount) {
@@ -145,6 +146,7 @@ export default function VendorAnalytics() {
       {/* ==================== MILESTONE 2 ANALYTICS SECTIONS ==================== */}
       <CustomerSegments />
       <RecommendationWidget />
+      <InventoryForecast />
       <AnalyticsValidation />
       {/* ======================================================================= */}
     </div>

@@ -15,6 +15,7 @@
   "dependencies": {
     "@google/genai": "^2.15.0",
     "@google/generative-ai": "^0.24.1",
+    "arima": "^0.2.8",
     "axios": "^1.19.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

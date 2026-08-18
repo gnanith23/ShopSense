@@ -45,6 +45,9 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 // Import recommendation routes (Milestone 2 - Requirement 3)
 const recommendationRoutes = require("./routes/recommendationRoutes");
 
+// Import forecasting routes (Milestone 2 Advanced Feature)
+const forecastRoutes = require("./routes/forecastRoutes");
+
 
 // ==================== ENVIRONMENT CONFIGURATION ====================
 
@@ -100,6 +103,9 @@ app.use("/api/analytics", analyticsRoutes);
 
 // Rule-based recommendation APIs
 app.use("/api/recommendations", recommendationRoutes);
+
+// ML inventory demand forecasting APIs (Milestone 2 Advanced)
+app.use("/api/forecast", forecastRoutes);
 // ==================== TEST ROUTE ====================
 
 // Simple route to check whether the ShopSense backend is running
