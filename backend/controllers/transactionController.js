@@ -12,6 +12,10 @@ const Customer = require("../models/Customer");
 // Import Product model to verify product details
 const Product = require("../models/Product");
 
+// Import Real-Time WebSocket notifier (Milestone 3)
+const { notifyRealtimeSale } = require("../services/realtimeNotifier");
+
+
 
 // ================================================================
 // ==================== CREATE TRANSACTION =========================
@@ -210,8 +214,23 @@ const createTransaction = async (req, res) => {
         // Save updated product
         await product.save();
 
+        // ==================== REAL-TIME WEBSOCKET BROADCAST ====================
+        // Asynchronously push real-time sale event to the connected vendor's dashboard
+        notifyRealtimeSale({
+            vendorId: transaction.vendor,
+            transactionId: transaction._id,
+            productId: product._id,
+            productName: product.name,
+            category: product.category,
+            quantity: purchaseQuantity,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            customerName: customer.name
+        }).catch(err => console.error("Real-time broadcast error:", err.message));
+
 
         // ==================== SUCCESS RESPONSE ====================
+
 
         return res.status(201).json({
 

@@ -104,10 +104,34 @@ const createCustomer = async (req, res) => {
 
 
 // ================================================================
+// ==================== GET CUSTOMERS ==============================
+// ================================================================
+
+// Controller function responsible for listing all customers
+const getCustomers = async (req, res) => {
+    try {
+        const customers = await Customer.find().sort({ name: 1 });
+        return res.status(200).json({
+            success: true,
+            count: customers.length,
+            customers
+        });
+    } catch (error) {
+        console.error("Get customers error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while retrieving customers"
+        });
+    }
+};
+
+
+// ================================================================
 // ==================== EXPORT CONTROLLERS =========================
 // ================================================================
 
 // Export customer controller functions so routes can use them
 module.exports = {
-    createCustomer
+    createCustomer,
+    getCustomers
 };

@@ -7,7 +7,8 @@ const express = require("express");
 
 const {
     getCategoryRecommendations,
-    getAvailableCategories
+    getAvailableCategories,
+    getVectorRecommendations
 } = require("../controllers/recommendationController");
 
 
@@ -27,8 +28,22 @@ const router = express.Router();
 // ================================================================
 
 // IMPORTANT:
-// Specific routes (e.g. /categories) must appear BEFORE dynamic
+// Specific routes (e.g. /vector, /categories) must appear BEFORE dynamic
 // routes (e.g. /category/:category) to avoid incorrect routing.
+
+
+// ==================== VECTOR SEARCH RECOMMENDATIONS =============
+
+// GET /api/recommendations/vector
+// GET /api/recommendations/vector?customerId=...&limit=5
+//
+// Advanced AI/Semantic recommendations powered by 768-dimensional product &
+// user purchase behavior embeddings with cosine similarity.
+router.get(
+    "/vector",
+    protectVendor,
+    getVectorRecommendations
+);
 
 
 // ==================== LIST AVAILABLE CATEGORIES ================

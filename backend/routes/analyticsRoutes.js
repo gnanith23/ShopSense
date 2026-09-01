@@ -7,7 +7,13 @@ const express = require("express");
 
 const {
     getCustomerSegments,
-    getValidation
+    getValidation,
+    getSalesTrend,
+    getRevenueByCategory,
+    getProductPerformance,
+    getMarketplaceBenchmark,
+    exportSalesCSV,
+    runAiDataAnalyst
 } = require("../controllers/analyticsController");
 
 
@@ -30,10 +36,6 @@ const router = express.Router();
 // ==================== CUSTOMER SEGMENTATION ====================
 
 // GET /api/analytics/customer-segments
-//
-// Returns customers grouped by spending tier (VIP, HIGH_VALUE,
-// REGULAR, LOW_VALUE) based on COMPLETED transaction history
-// for the authenticated vendor.
 router.get(
     "/customer-segments",
     protectVendor,
@@ -44,9 +46,6 @@ router.get(
 // ==================== HISTORICAL DATA VALIDATION ===============
 
 // GET /api/analytics/validation
-//
-// Validates inventory, customer segmentation, and recommendation
-// outputs against raw historical MongoDB data.
 router.get(
     "/validation",
     protectVendor,
@@ -54,6 +53,62 @@ router.get(
 );
 
 
+// ==================== MILESTONE 3: ADVANCED ANALYTICS APIS ======
+
+// GET /api/analytics/sales-trend
+router.get(
+    "/sales-trend",
+    protectVendor,
+    getSalesTrend
+);
+
+// GET /api/analytics/revenue-by-category
+router.get(
+    "/revenue-by-category",
+    protectVendor,
+    getRevenueByCategory
+);
+
+// GET /api/analytics/product-performance
+router.get(
+    "/product-performance",
+    protectVendor,
+    getProductPerformance
+);
+
+
+// ==================== MILESTONE 3: MARKETPLACE BENCHMARK ========
+
+// GET /api/analytics/benchmark
+router.get(
+    "/benchmark",
+    protectVendor,
+    getMarketplaceBenchmark
+);
+
+
+// ==================== MILESTONE 3: CSV EXPORT ===================
+
+// GET /api/analytics/export/csv
+router.get(
+    "/export/csv",
+    protectVendor,
+    exportSalesCSV
+);
+
+
+// ==================== MILESTONE 3: AI DATA ANALYST ==============
+
+// POST /api/analytics/ai-analyst
+router.post(
+    "/ai-analyst",
+    protectVendor,
+    runAiDataAnalyst
+);
+
+
 // ==================== EXPORT ROUTER ====================
 
 module.exports = router;
+
+

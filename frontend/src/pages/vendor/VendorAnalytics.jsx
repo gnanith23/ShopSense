@@ -8,6 +8,15 @@ import CustomerSegments from '../../components/CustomerSegments';
 import RecommendationWidget from '../../components/RecommendationWidget';
 import InventoryForecast from '../../components/InventoryForecast';
 import AnalyticsValidation from '../../components/AnalyticsValidation';
+import SentimentDashboardWidget from '../../components/SentimentDashboardWidget';
+import VectorRecommendationWidget from '../../components/VectorRecommendationWidget';
+
+// ==================== MILESTONE 3 COMPONENTS ====================
+import AdvancedAnalyticsCharts from '../../components/AdvancedAnalyticsCharts';
+import MarketplaceBenchmarkWidget from '../../components/MarketplaceBenchmarkWidget';
+import RealtimeDashboardWidget from '../../components/RealtimeDashboardWidget';
+import AiDataAnalystWidget from '../../components/AiDataAnalystWidget';
+
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
@@ -143,7 +152,21 @@ export default function VendorAnalytics() {
         Analytics show aggregate totals from all completed transactions.
       </p>
 
+      {/* ==================== MILESTONE 3: REAL-TIME DASHBOARD ==================== */}
+      <RealtimeDashboardWidget />
+
+      {/* ==================== MILESTONE 3: ADVANCED ANALYTICS & CSV EXPORT ========== */}
+      <AdvancedAnalyticsCharts />
+
+      {/* ==================== MILESTONE 3: MARKETPLACE BENCHMARK ==================== */}
+      <MarketplaceBenchmarkWidget />
+
+      {/* ==================== MILESTONE 3: AI DATA ANALYST (TEXT-TO-SQL) ============= */}
+      <AiDataAnalystWidget />
+
       {/* ==================== MILESTONE 2 ANALYTICS SECTIONS ==================== */}
+      <SentimentDashboardWidget />
+      <VectorRecommendationWidget />
       <CustomerSegments />
       <RecommendationWidget />
       <InventoryForecast />
@@ -152,3 +175,4 @@ export default function VendorAnalytics() {
     </div>
   );
 }
+

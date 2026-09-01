@@ -3,6 +3,12 @@
 const mongoose    = require("mongoose");
 const Transaction = require("../models/Transaction");
 const Product     = require("../models/Product");
+const Customer    = require("../models/Customer");
+const {
+    generateProductEmbedding,
+    generateUserBehaviorEmbedding,
+    calculateCosineSimilarity
+} = require("../services/embeddingService");
 
 
 // ================================================================
@@ -318,10 +324,153 @@ const getAvailableCategories = async (req, res) => {
 
 
 // ================================================================
+// ==================== VECTOR SEARCH RECOMMENDATIONS ==============
+// ================================================================
+
+// GET /api/recommendations/vector
+// GET /api/recommendations/vector?customerId=...&limit=5
+//
+// Advanced Vector Similarity Recommendation Engine:
+// 1. Builds user behavior preference embedding from customer transaction history.
+// 2. Fetches vendor's products, generating 768-dim embeddings if missing.
+// 3. Filters out out-of-stock products (stock > 0).
+// 4. Performs cosine similarity search between user profile vector and product vectors.
+// 5. Returns ranked contextual recommendations with similarity score and rationale.
+const getVectorRecommendations = async (req, res) => {
+    try {
+        const vendorId = req.vendorId;
+
+        // Parse limit
+        let limit = parseInt(req.query.limit, 10);
+        if (isNaN(limit) || limit <= 0) limit = DEFAULT_LIMIT;
+        if (limit > MAX_LIMIT) limit = MAX_LIMIT;
+
+        // Parse customerId or pick candidate customer with transactions for this vendor
+        let customerId = req.query.customerId;
+        let customer = null;
+
+        if (customerId && mongoose.Types.ObjectId.isValid(customerId)) {
+            customer = await Customer.findById(customerId);
+        }
+
+        if (!customer) {
+            // Find most active customer for this vendor
+            const activeCustomerAggregate = await Transaction.aggregate([
+                { $match: { vendor: new mongoose.Types.ObjectId(vendorId), status: "COMPLETED" } },
+                { $group: { _id: "$customer", count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+                { $limit: 1 }
+            ]);
+
+            if (activeCustomerAggregate.length > 0) {
+                customer = await Customer.findById(activeCustomerAggregate[0]._id);
+            } else {
+                customer = await Customer.findOne();
+            }
+        }
+
+        // Fetch customer transactions for profile representation
+        let userTransactions = [];
+        if (customer) {
+            userTransactions = await Transaction.find({
+                customer: customer._id,
+                status: "COMPLETED"
+            }).populate("product", "name category description price aiTags seoKeywords embedding");
+        }
+
+        // Generate User Behavior Embedding Vector
+        const userVector = generateUserBehaviorEmbedding(userTransactions);
+
+        // Fetch vendor products excluding out-of-stock products (stock > 0)
+        const products = await Product.find({
+            vendor: vendorId,
+            stock: { $gt: 0 }
+        });
+
+        if (products.length === 0) {
+            return res.status(200).json({
+                success: true,
+                type: "VECTOR_SEMANTIC",
+                message: "No in-stock products available for recommendation",
+                recommendationBasis: "vector similarity on customer purchase history profile",
+                count: 0,
+                recommendations: []
+            });
+        }
+
+        // Compute embeddings and similarity scores
+        const scoredProducts = [];
+
+        for (const product of products) {
+            // Ensure product embedding is populated
+            if (!Array.isArray(product.embedding) || product.embedding.length === 0) {
+                product.embedding = await generateProductEmbedding(product);
+                await product.save();
+            }
+
+            const similarity = calculateCosineSimilarity(userVector, product.embedding);
+
+            // Extract purchase category context
+            const purchasedCategories = [...new Set(
+                userTransactions.map(t => t.product?.category).filter(Boolean)
+            )];
+
+            let reason = `Semantically matches user interest profile`;
+            if (purchasedCategories.includes(product.category)) {
+                reason = `Direct match with frequently purchased category: ${product.category}`;
+            } else if (purchasedCategories.length > 0) {
+                reason = `Cross-category recommendation based on interest in ${purchasedCategories.slice(0, 2).join(", ")}`;
+            }
+
+            scoredProducts.push({
+                productId: product._id,
+                name: product.name,
+                category: product.category,
+                price: product.price,
+                stock: product.stock,
+                imageUrl: product.imageUrl,
+                similarityScore: parseFloat(similarity.toFixed(4)),
+                matchPercentage: Math.min(100, Math.max(1, Math.round(similarity * 100) || 75)),
+                reason
+            });
+        }
+
+        // Sort by vector similarity score descending
+        scoredProducts.sort((a, b) => b.similarityScore - a.similarityScore);
+
+        const rankedRecommendations = scoredProducts.slice(0, limit).map((item, idx) => ({
+            rank: idx + 1,
+            ...item
+        }));
+
+        return res.status(200).json({
+            success: true,
+            type: "VECTOR_SEMANTIC",
+            message: "Personalized vector search recommendations generated",
+            recommendationBasis: "vector similarity on customer purchase history profile",
+            customer: customer ? { id: customer._id, name: customer.name, email: customer.email } : null,
+            count: rankedRecommendations.length,
+            recommendations: rankedRecommendations
+        });
+
+    } catch (error) {
+        console.error("Get vector recommendations error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while generating vector recommendations",
+            error: error.message
+        });
+    }
+};
+
+
+// ================================================================
 // ==================== EXPORT CONTROLLERS =========================
 // ================================================================
 
 module.exports = {
     getCategoryRecommendations,
-    getAvailableCategories
+    getAvailableCategories,
+    getVectorRecommendations
 };
+

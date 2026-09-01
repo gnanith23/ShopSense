@@ -79,6 +79,15 @@ const productSchema = new mongoose.Schema(
         seoKeywords: {
             type: [String],
             default: []
+        },
+
+
+        // ==================== ADVANCED - VECTOR EMBEDDING ====================
+
+        // 768-dimensional vector embedding for semantic search
+        embedding: {
+            type: [Number],
+            default: []
         }
     },
 

@@ -8,7 +8,8 @@ const express = require("express");
 
 // Import customer controller functions
 const {
-    createCustomer
+    createCustomer,
+    getCustomers
 } = require("../controllers/customerController");
 
 
@@ -19,8 +20,15 @@ const router = express.Router();
 
 
 // ================================================================
-// ==================== CREATE CUSTOMER ============================
+// ==================== CUSTOMER ROUTES ============================
 // ================================================================
+
+// GET /api/customers
+// Returns all customers
+router.get(
+    "/",
+    getCustomers
+);
 
 // POST /api/customers
 // Creates a new customer

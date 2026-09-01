@@ -19,6 +19,7 @@ const vendorNavItems = [
   { to: '/vendor/catalog', icon: Package, label: 'My Catalog' },
   { to: '/vendor/products/add', icon: PlusCircle, label: 'Add Product' },
   { to: '/vendor/analytics', icon: BarChart2, label: 'Analytics' },
+  { to: '/vendor/customer-purchases', icon: ShoppingBag, label: 'My Purchases (Customer)' },
   { to: '/vendor/profile', icon: User, label: 'Profile' },
 ];
 

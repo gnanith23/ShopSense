@@ -48,6 +48,9 @@ const recommendationRoutes = require("./routes/recommendationRoutes");
 // Import forecasting routes (Milestone 2 Advanced Feature)
 const forecastRoutes = require("./routes/forecastRoutes");
 
+// Import review & LLM sentiment routes (Milestone 2 Advanced Feature)
+const reviewRoutes = require("./routes/reviewRoutes");
+
 
 // ==================== ENVIRONMENT CONFIGURATION ====================
 
@@ -106,6 +109,9 @@ app.use("/api/recommendations", recommendationRoutes);
 
 // ML inventory demand forecasting APIs (Milestone 2 Advanced)
 app.use("/api/forecast", forecastRoutes);
+
+// LLM Review Sentiment APIs (Milestone 2 Advanced)
+app.use("/api/reviews", reviewRoutes);
 // ==================== TEST ROUTE ====================
 
 // Simple route to check whether the ShopSense backend is running

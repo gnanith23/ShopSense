@@ -15,3 +15,7 @@ coverage/
 npm-debug.log*
 
 package-lock.json
+
+backend/data/
+__pycache__/
+*.pyc

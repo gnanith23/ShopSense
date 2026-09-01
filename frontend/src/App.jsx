@@ -18,6 +18,8 @@ import EditProduct from './pages/vendor/EditProduct';
 import VendorAnalytics from './pages/vendor/VendorAnalytics';
 import VendorProfile from './pages/vendor/VendorProfile';
 
+import CustomerPurchases from './pages/customer/CustomerPurchases';
+
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import VendorManagement from './pages/admin/VendorManagement';
@@ -62,6 +64,7 @@ export default function App() {
             <Route path="products/add" element={<AddProduct />} />
             <Route path="products/:id/edit" element={<EditProduct />} />
             <Route path="analytics" element={<VendorAnalytics />} />
+            <Route path="customer-purchases" element={<CustomerPurchases />} />
             <Route path="profile" element={<VendorProfile />} />
           </Route>
 
