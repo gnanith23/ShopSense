@@ -565,3 +565,50 @@ Upgrades recommendation capabilities with 768-dimensional semantic vector search
 
 ## ⭐ If you like this project, consider giving it a star on GitHub!
 
+## Milestone 3 — Advanced APIs & Reporting
+
+Milestone 3 extends ShopSense with advanced analytics, reporting, and AI capabilities.
+
+### Advanced Analytics
+- Analytics endpoints formatted for frontend charts and graphs
+- Marketplace benchmarking to compare vendor performance with marketplace averages
+- CSV-based data export for reporting
+
+### LLM Sentiment Analysis
+- Customer product reviews are analyzed using an LLM
+- Generates sentiment classification and sentiment score
+- Extracts review summary, frequently mentioned pros, and cons
+- Vendor-specific review isolation
+
+### Vector Recommendations
+- Product embeddings are generated from product information
+- Customer preference vectors are derived from purchase behaviour
+- Cosine similarity is used to rank semantically similar products
+- Out-of-stock products are excluded from recommendations
+
+### RAG-Powered AI Shopping Assistant
+- Customers can ask natural-language questions about products
+- Retrieves relevant product information from the ShopSense catalog
+- Generates contextual answers using retrieved product data
+
+### AI Data Analyst
+- Vendors can ask natural-language questions about their sales data
+- Converts questions into data queries and analyzes the results
+- Provides business insights through the vendor analytics interface
+
+### Real-Time Dashboard
+- FastAPI-based real-time service
+- WebSocket communication for live dashboard updates
+- Real-time sales notifications without requiring manual page refresh
+
+### Milestone 3 Technology Stack
+- React + Vite
+- Node.js + Express
+- MongoDB Atlas
+- Google Gemini / LLM services
+- Vector embeddings and cosine similarity
+- FastAPI
+- WebSockets
+- REST APIs
+- MongoDB aggregation
+- CSV reporting
