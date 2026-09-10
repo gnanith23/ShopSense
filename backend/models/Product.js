@@ -63,6 +63,16 @@ const productSchema = new mongoose.Schema(
             default: ""
         },
 
+        // ==================== COMPARABLE PRODUCT IDENTIFIER ====================
+        // Optional minimal model identifier (e.g., 'iPhone 15', 'Gaming Mouse')
+        // Used to group comparable offers from different vendors.
+        // Fallback is normalized product name if not explicitly set.
+        productModel: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
 
         // ==================== ADVANCED - AI GENERATED TAGS ====================
 

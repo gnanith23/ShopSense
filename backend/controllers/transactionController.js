@@ -28,10 +28,10 @@ const createTransaction = async (req, res) => {
 
         // ==================== GET REQUEST DATA ====================
 
-        // Get vendor, customer, product and quantity from request
+        // Customer ID can come from authenticated JWT (req.customerId) or request body
+        const effectiveCustomerId = req.customerId || req.body.customerId;
         const {
             vendorId,
-            customerId,
             productId,
             quantity
         } = req.body;
@@ -39,77 +39,40 @@ const createTransaction = async (req, res) => {
 
         // ==================== BASIC INPUT VALIDATION ====================
 
-        // Check whether all required fields were provided
-        if (
-            !vendorId ||
-            !customerId ||
-            !productId ||
-            quantity === undefined
-        ) {
-
+        if (!productId || quantity === undefined) {
             return res.status(400).json({
-
                 success: false,
+                message: "Please provide productId and quantity"
+            });
+        }
 
-                message:
-                    "Please provide vendorId, customerId, productId and quantity"
+        if (!effectiveCustomerId) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide customerId or authenticate as customer"
             });
         }
 
 
         // ==================== QUANTITY VALIDATION ====================
 
-        // Convert quantity into a number
         const purchaseQuantity = Number(quantity);
 
-
-        // Quantity must be a positive whole number
-        if (
-            !Number.isInteger(purchaseQuantity) ||
-            purchaseQuantity <= 0
-        ) {
-
+        if (!Number.isInteger(purchaseQuantity) || purchaseQuantity <= 0) {
             return res.status(400).json({
-
                 success: false,
-
-                message:
-                    "Quantity must be a positive whole number"
-            });
-        }
-
-
-        // ==================== CHECK VENDOR ====================
-
-        // Search MongoDB for the vendor
-        const vendor = await Vendor.findById(vendorId);
-
-
-        // Stop if vendor does not exist
-        if (!vendor) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message: "Vendor not found"
+                message: "Quantity must be a positive whole number"
             });
         }
 
 
         // ==================== CHECK CUSTOMER ====================
 
-        // Search MongoDB for the customer
-        const customer = await Customer.findById(customerId);
+        const customer = await Customer.findById(effectiveCustomerId);
 
-
-        // Stop if customer does not exist
         if (!customer) {
-
             return res.status(404).json({
-
                 success: false,
-
                 message: "Customer not found"
             });
         }
@@ -117,107 +80,81 @@ const createTransaction = async (req, res) => {
 
         // ==================== CHECK PRODUCT ====================
 
-        // Search MongoDB for the product
         const product = await Product.findById(productId);
 
-
-        // Stop if product does not exist
         if (!product) {
-
             return res.status(404).json({
-
                 success: false,
-
                 message: "Product not found"
             });
         }
 
 
-        // ==================== VERIFY PRODUCT OWNER ====================
+        // ==================== VERIFY PRODUCT VENDOR ====================
 
-        // Make sure this product belongs to the selected vendor
-        if (
-            product.vendor.toString() !== vendorId.toString()
-        ) {
+        // Determine vendor authoritatively from the product in MongoDB
+        const actualVendorId = product.vendor.toString();
 
+        // If frontend provided a vendorId, ensure it strictly matches product.vendor
+        if (vendorId && vendorId.toString() !== actualVendorId) {
             return res.status(400).json({
-
                 success: false,
+                message: "Product does not belong to the selected vendor"
+            });
+        }
 
-                message:
-                    "Product does not belong to this vendor"
+        const vendor = await Vendor.findById(actualVendorId);
+
+        if (!vendor) {
+            return res.status(404).json({
+                success: false,
+                message: "Vendor not found"
             });
         }
 
 
         // ==================== CHECK STOCK ====================
 
-        // Make sure enough stock is available
-        if (
-            product.stock < purchaseQuantity
-        ) {
-
+        if (product.stock < purchaseQuantity) {
             return res.status(400).json({
-
                 success: false,
-
-                message: "Insufficient product stock"
+                message: `Insufficient product stock. Only ${product.stock} units available.`
             });
         }
 
 
         // ==================== GET PRODUCT PRICE ====================
 
-        // Get product price directly from MongoDB
-        // The client cannot decide the product price
+        // Get product price directly from MongoDB - client cannot tamper with price
         const unitPrice = product.price;
-
-
-        // ==================== CALCULATE TOTAL ====================
-
-        // Calculate total transaction amount
-        //
-        // totalAmount = unitPrice × quantity
-        const totalAmount =
-            unitPrice * purchaseQuantity;
+        const totalAmount = unitPrice * purchaseQuantity;
 
 
         // ==================== CREATE TRANSACTION ====================
 
-        // Create and save the transaction
-        const transaction =
-            await Transaction.create({
-
-                vendor: vendorId,
-
-                customer: customerId,
-
-                product: productId,
-
-                quantity: purchaseQuantity,
-
-                unitPrice: unitPrice,
-
-                totalAmount: totalAmount,
-
-                status: "COMPLETED"
-            });
+        const transaction = await Transaction.create({
+            vendor: actualVendorId,
+            customer: customer._id,
+            product: product._id,
+            quantity: purchaseQuantity,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            status: "COMPLETED"
+        });
 
 
         // ==================== UPDATE PRODUCT STOCK ====================
 
-        // Reduce product stock after successful transaction
-        product.stock =
-            product.stock - purchaseQuantity;
-
-
-        // Save updated product
+        // Decrease stock on backend, prevent negative inventory
+        product.stock = Math.max(0, product.stock - purchaseQuantity);
         await product.save();
 
+
         // ==================== REAL-TIME WEBSOCKET BROADCAST ====================
-        // Asynchronously push real-time sale event to the connected vendor's dashboard
+
+        // Asynchronously broadcast sale event to the connected vendor's dashboard
         notifyRealtimeSale({
-            vendorId: transaction.vendor,
+            vendorId: actualVendorId,
             transactionId: transaction._id,
             productId: product._id,
             productName: product.name,
@@ -231,57 +168,139 @@ const createTransaction = async (req, res) => {
 
         // ==================== SUCCESS RESPONSE ====================
 
-
         return res.status(201).json({
-
             success: true,
-
-            message:
-                "Transaction created successfully",
-
+            message: "Transaction created successfully",
             transaction: {
-
                 id: transaction._id,
-
+                _id: transaction._id,
                 vendor: transaction.vendor,
-
+                vendorName: vendor.businessName || vendor.name,
                 customer: transaction.customer,
-
+                customerName: customer.name,
                 product: transaction.product,
-
+                productName: product.name,
                 quantity: transaction.quantity,
-
                 unitPrice: transaction.unitPrice,
-
-                totalAmount:
-                    transaction.totalAmount,
-
+                totalAmount: transaction.totalAmount,
                 status: transaction.status,
-
-                createdAt:
-                    transaction.createdAt
+                createdAt: transaction.createdAt,
+                updatedStock: product.stock
             }
         });
 
+    } catch (error) {
+        console.error("Create transaction error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while creating transaction"
+        });
+    }
+};
+
+
+// ================================================================
+// ==================== GET MY PURCHASES ===========================
+// ================================================================
+
+// GET /api/transactions/my-purchases
+// Returns completed transactions for the authenticated or specified customer
+const getMyPurchases = async (req, res) => {
+    try {
+        const effectiveCustomerId = req.customerId || req.query.customerId;
+
+        if (!effectiveCustomerId) {
+            return res.status(400).json({
+                success: false,
+                message: "Customer authentication or customerId query parameter required"
+            });
+        }
+
+        const transactions = await Transaction.find({
+            customer: effectiveCustomerId,
+            status: "COMPLETED"
+        })
+            .sort({ createdAt: -1 })
+            .populate("product", "name category price imageUrl productModel")
+            .populate("vendor", "name businessName email phone address");
+
+        return res.status(200).json({
+            success: true,
+            count: transactions.length,
+            transactions: transactions.map(tx => ({
+                id: tx._id,
+                _id: tx._id,
+                productId: tx.product?._id,
+                productName: tx.product?.name || "Product",
+                category: tx.product?.category || "General",
+                imageUrl: tx.product?.imageUrl || "",
+                vendorId: tx.vendor?._id,
+                vendorName: tx.vendor?.businessName || tx.vendor?.name || "Merchant",
+                quantity: tx.quantity,
+                unitPrice: tx.unitPrice,
+                totalAmount: tx.totalAmount,
+                status: tx.status,
+                createdAt: tx.createdAt
+            }))
+        });
 
     } catch (error) {
-
-        // ==================== ERROR HANDLING ====================
-
-        // Print actual error only in backend terminal
-        console.error(
-            "Create transaction error:",
-            error.message
-        );
-
-
-        // Do not expose internal error details to the client
+        console.error("Get my purchases error:", error.message);
         return res.status(500).json({
-
             success: false,
+            message: "Server error while retrieving purchase history"
+        });
+    }
+};
 
-            message:
-                "Server error while creating transaction"
+
+// ================================================================
+// ==================== GET VENDOR TRANSACTIONS ====================
+// ================================================================
+
+// GET /api/transactions/vendor/:vendorId?
+// Returns latest transactions for the authenticated or specified vendor
+const getVendorTransactions = async (req, res) => {
+    try {
+        const effectiveVendorId = req.vendorId || req.params.vendorId || req.query.vendorId;
+
+        if (!effectiveVendorId) {
+            return res.status(400).json({
+                success: false,
+                message: "Vendor authentication or vendorId is required"
+            });
+        }
+
+        const transactions = await Transaction.find({
+            vendor: effectiveVendorId,
+            status: "COMPLETED"
+        })
+            .sort({ createdAt: -1 })
+            .limit(25)
+            .populate("product", "name category price imageUrl")
+            .populate("customer", "name email");
+
+        return res.status(200).json({
+            success: true,
+            count: transactions.length,
+            transactions: transactions.map(tx => ({
+                transactionId: tx._id?.toString(),
+                productId: tx.product?._id?.toString(),
+                productName: tx.product?.name || "Product",
+                category: tx.product?.category || "General",
+                quantity: tx.quantity,
+                unitPrice: tx.unitPrice,
+                totalAmount: tx.totalAmount,
+                customerName: tx.customer?.name || "Customer",
+                timestamp: tx.createdAt
+            }))
+        });
+
+    } catch (error) {
+        console.error("Get vendor transactions error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while retrieving vendor transactions"
         });
     }
 };
@@ -291,8 +310,8 @@ const createTransaction = async (req, res) => {
 // ==================== EXPORT CONTROLLER ==========================
 // ================================================================
 
-// Export transaction controller so routes can use it
 module.exports = {
-
-    createTransaction
+    createTransaction,
+    getMyPurchases,
+    getVendorTransactions
 };

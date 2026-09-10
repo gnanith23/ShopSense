@@ -52,6 +52,7 @@ export function AuthProvider({ children }) {
     logout,
     isVendor: role === 'vendor',
     isAdmin: role === 'admin',
+    isCustomer: role === 'customer',
     isAuthenticated: !!token,
   };
 

@@ -27,6 +27,13 @@ const customerSchema = new mongoose.Schema(
             trim: true
         },
 
+        // Customer password (hashed with bcrypt)
+        password: {
+            type: String,
+            trim: true,
+            default: ""
+        },
+
         // Customer phone number
         phone: {
             type: String,

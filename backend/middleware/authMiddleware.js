@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 // Vendor is needed because JWT verification alone is not enough.
 // We must also check the vendor's CURRENT status in MongoDB.
 const Vendor = require("../models/Vendor");
+const Customer = require("../models/Customer");
 
 
 // ================================================================
@@ -192,12 +193,104 @@ const verifyVendorOwnership = (req, res, next) => {
 
 
 // ================================================================
+// ==================== CUSTOMER AUTHENTICATION ====================
+// ================================================================
+
+const protectCustomer = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required as customer"
+            });
+        }
+
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required as customer"
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (!decoded.customerId) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid customer authentication token"
+            });
+        }
+
+        const customer = await Customer.findById(decoded.customerId);
+        if (!customer) {
+            return res.status(401).json({
+                success: false,
+                message: "Customer account no longer exists"
+            });
+        }
+
+        req.customerId = customer._id.toString();
+        req.customer = customer;
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired customer token"
+        });
+    }
+};
+
+const optionalCustomerAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = authHeader.split(" ")[1];
+            if (token) {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                if (decoded.customerId) {
+                    const customer = await Customer.findById(decoded.customerId);
+                    if (customer) {
+                        req.customerId = customer._id.toString();
+                        req.customer = customer;
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        // Non-blocking for optional auth
+    }
+    next();
+};
+
+
+const optionalVendorAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = authHeader.split(" ")[1];
+            if (token) {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                if (decoded.vendorId) {
+                    req.vendorId = decoded.vendorId.toString();
+                }
+            }
+        }
+    } catch (e) {
+        // Non-blocking for optional auth
+    }
+    next();
+};
+
+
+// ================================================================
 // ==================== EXPORT ====================
 // ================================================================
 
 module.exports = {
-
     protectVendor,
-
-    verifyVendorOwnership
+    verifyVendorOwnership,
+    protectCustomer,
+    optionalCustomerAuth,
+    optionalVendorAuth
 };

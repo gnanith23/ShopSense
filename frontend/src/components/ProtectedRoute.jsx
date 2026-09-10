@@ -21,8 +21,12 @@ export default function ProtectedRoute({ children, requiredRole }) {
 
   if (requiredRole && role !== requiredRole) {
     // Wrong role — send to their correct dashboard
+    if (role === 'customer') {
+      return <Navigate to="/marketplace" replace />;
+    }
     return <Navigate to={role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'} replace />;
   }
 
   return children;
 }
+

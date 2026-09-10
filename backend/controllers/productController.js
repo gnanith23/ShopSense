@@ -564,6 +564,165 @@ const deleteProduct = async (req, res) => {
 
 
 // ================================================================
+// ==================== GET MARKETPLACE PRODUCTS ===================
+// ================================================================
+
+// GET /api/products/marketplace
+//
+// Public/Customer marketplace endpoint:
+// - Retrieves products from registered, non-suspended vendors
+// - Supports search by product name, model, description, category
+// - Groups comparable products across vendors by productModel (or normalized name)
+// - Sorts vendor offers from lowest price to highest price
+// - Populates vendor details (businessName, name, email, address)
+const getMarketplaceProducts = async (req, res) => {
+    try {
+        const { search, category, sortBy } = req.query;
+
+        // Step 1: Find active vendors (exclude SUSPENDED vendors)
+        const activeVendors = await Vendor.find({
+            status: { $ne: "SUSPENDED" }
+        }).select("_id name businessName email phone address status");
+
+        const activeVendorIds = activeVendors.map(v => v._id);
+        const vendorMap = new Map();
+        activeVendors.forEach(v => vendorMap.set(v._id.toString(), v));
+
+        // Step 2: Build product query
+        const productQuery = {
+            vendor: { $in: activeVendorIds }
+        };
+
+        if (category && category.trim() && category.toLowerCase() !== "all") {
+            productQuery.category = new RegExp(`^${category.trim()}$`, "i");
+        }
+
+        if (search && search.trim()) {
+            const searchRegex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+            productQuery.$or = [
+                { name: searchRegex },
+                { productModel: searchRegex },
+                { description: searchRegex },
+                { category: searchRegex },
+                { aiTags: { $in: [searchRegex] } },
+                { seoKeywords: { $in: [searchRegex] } }
+            ];
+        }
+
+        // Fetch products
+        let products = await Product.find(productQuery)
+            .populate("vendor", "_id name businessName email phone address status")
+            .lean();
+
+        // Step 3: Sort flat products list
+        if (sortBy === "price_asc") {
+            products.sort((a, b) => a.price - b.price);
+        } else if (sortBy === "price_desc") {
+            products.sort((a, b) => b.price - a.price);
+        } else if (sortBy === "name_asc") {
+            products.sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+            // Default: newest first
+            products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        // Step 4: Group comparable products across vendors
+        // Identifies identical/comparable products using productModel or normalized name.
+        // For example, "Gaming Mouse" from Vendor 1 and Vendor 2 group together.
+        // "iPhone 15" from Vendor 1 and Vendor 2 group together, but NOT with "Samsung S24".
+        const groupsMap = new Map();
+
+        for (const p of products) {
+            if (!p.vendor) continue;
+
+            const groupKey = (p.productModel && p.productModel.trim())
+                ? p.productModel.toLowerCase().trim()
+                : p.name.toLowerCase().trim();
+
+            if (!groupsMap.has(groupKey)) {
+                groupsMap.set(groupKey, {
+                    groupKey,
+                    productName: p.name,
+                    productModel: p.productModel || p.name,
+                    category: p.category,
+                    description: p.description,
+                    imageUrl: p.imageUrl,
+                    aiTags: p.aiTags || [],
+                    offers: []
+                });
+            }
+
+            const group = groupsMap.get(groupKey);
+            group.offers.push({
+                productId: p._id,
+                productName: p.name,
+                productModel: p.productModel || p.name,
+                category: p.category,
+                price: p.price,
+                stock: p.stock,
+                inStock: p.stock > 0,
+                imageUrl: p.imageUrl,
+                description: p.description,
+                vendorId: p.vendor._id,
+                vendorName: p.vendor.businessName || p.vendor.name || "Merchant Store",
+                vendorEmail: p.vendor.email,
+                vendorAddress: p.vendor.address || "",
+                createdAt: p.createdAt
+            });
+        }
+
+        // Step 5: Process each group - sort offers lowest price to highest price
+        const comparableGroups = Array.from(groupsMap.values()).map(group => {
+            // Sort offers lowest price to highest price
+            group.offers.sort((a, b) => a.price - b.price);
+
+            // Mark lowest price as best offer
+            if (group.offers.length > 0) {
+                group.offers[0].isBestOffer = true;
+            }
+
+            const prices = group.offers.map(o => o.price);
+            group.minPrice = Math.min(...prices);
+            group.maxPrice = Math.max(...prices);
+            group.totalStock = group.offers.reduce((sum, o) => sum + (Number(o.stock) || 0), 0);
+            group.offerCount = group.offers.length;
+
+            return group;
+        });
+
+        // If sorting groups by price, sort groups by minPrice
+        if (sortBy === "price_asc") {
+            comparableGroups.sort((a, b) => a.minPrice - b.minPrice);
+        } else if (sortBy === "price_desc") {
+            comparableGroups.sort((a, b) => b.minPrice - a.minPrice);
+        }
+
+        // Extract distinct available categories
+        const distinctCategories = await Product.distinct("category", {
+            vendor: { $in: activeVendorIds }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Marketplace products retrieved successfully",
+            count: products.length,
+            groupCount: comparableGroups.length,
+            products,
+            comparableGroups,
+            categories: distinctCategories.filter(Boolean).sort()
+        });
+
+    } catch (error) {
+        console.error("Get marketplace products error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while retrieving marketplace products"
+        });
+    }
+};
+
+
+// ================================================================
 // ==================== EXPORT CONTROLLERS =========================
 // ================================================================
 
@@ -577,5 +736,7 @@ module.exports = {
 
     updateProduct,
 
-    deleteProduct
+    deleteProduct,
+
+    getMarketplaceProducts
 };

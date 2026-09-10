@@ -10,7 +10,8 @@ const {
     getMyProducts,
     getProductById,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getMarketplaceProducts
 } = require("../controllers/productController");
 
 
@@ -24,6 +25,18 @@ const {
 // ==================== CREATE ROUTER ====================
 
 const router = express.Router();
+
+
+// ================================================================
+// ==================== MARKETPLACE PRODUCTS =======================
+// ================================================================
+
+// GET /api/products/marketplace
+// Public/Customer marketplace product search and comparable vendor offers
+router.get(
+    "/marketplace",
+    getMarketplaceProducts
+);
 
 
 // ================================================================

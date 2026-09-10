@@ -19,17 +19,14 @@ const { generateProductEmbedding } = require("../services/embeddingService");
 // along with their review status (hasReviewed, review details).
 const getCustomerPurchases = async (req, res) => {
     try {
-        const { customerId, customerEmail } = req.query;
+        const effectiveCustomerId = req.customerId || req.query.customerId;
+        const { customerEmail } = req.query;
 
         let customer = null;
-        if (customerId && mongoose.Types.ObjectId.isValid(customerId)) {
-            customer = await Customer.findById(customerId);
+        if (effectiveCustomerId && mongoose.Types.ObjectId.isValid(effectiveCustomerId)) {
+            customer = await Customer.findById(effectiveCustomerId);
         } else if (customerEmail) {
             customer = await Customer.findOne({ email: customerEmail.toLowerCase().trim() });
-        }
-
-        if (!customer) {
-            customer = await Customer.findOne();
         }
 
         if (!customer) {
@@ -70,6 +67,8 @@ const getCustomerPurchases = async (req, res) => {
                     vendorName: tx.vendor?.businessName || tx.vendor?.name || "Merchant Store",
                     purchaseDate: tx.createdAt,
                     quantity: tx.quantity,
+                    totalAmount: tx.totalAmount,
+                    status: tx.status,
                     hasReviewed: !!existingReview,
                     review: existingReview ? {
                         id: existingReview._id,
@@ -122,7 +121,8 @@ const getCustomerPurchases = async (req, res) => {
 // Prevents duplicate reviews.
 const createReview = async (req, res) => {
     try {
-        const { productId, rating, reviewText, customerId, customerEmail, isDevMode } = req.body;
+        const effectiveCustomerId = req.customerId || req.body.customerId;
+        const { productId, rating, reviewText, customerEmail } = req.body;
 
         // Validation
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
@@ -158,14 +158,10 @@ const createReview = async (req, res) => {
 
         // Determine Customer
         let customer = null;
-        if (customerId && mongoose.Types.ObjectId.isValid(customerId)) {
-            customer = await Customer.findById(customerId);
+        if (effectiveCustomerId && mongoose.Types.ObjectId.isValid(effectiveCustomerId)) {
+            customer = await Customer.findById(effectiveCustomerId);
         } else if (customerEmail) {
             customer = await Customer.findOne({ email: customerEmail.toLowerCase().trim() });
-        }
-
-        if (!customer) {
-            customer = await Customer.findOne();
         }
 
         if (!customer) {
@@ -175,23 +171,21 @@ const createReview = async (req, res) => {
             });
         }
 
-        // Verification 1: Must have a COMPLETED transaction for this product (unless explicit dev test mode flag is active)
-        if (!isDevMode) {
-            const hasPurchased = await Transaction.findOne({
-                customer: customer._id,
-                product: product._id,
-                status: "COMPLETED"
-            });
+        // Strict Verification 1: Must have an actual COMPLETED transaction for this product
+        const hasPurchased = await Transaction.findOne({
+            customer: customer._id,
+            product: product._id,
+            status: "COMPLETED"
+        });
 
-            if (!hasPurchased) {
-                return res.status(403).json({
-                    success: false,
-                    message: "Verification failed: You can only review products you have actually purchased."
-                });
-            }
+        if (!hasPurchased) {
+            return res.status(403).json({
+                success: false,
+                message: "Verification failed: You can only review products you have actually purchased."
+            });
         }
 
-        // Verification 2: Prevent Duplicate Reviews for same customer & product
+        // Strict Verification 2: Prevent Duplicate Reviews for same customer & product
         const existingReview = await Review.findOne({
             customer: customer._id,
             product: product._id
@@ -204,7 +198,7 @@ const createReview = async (req, res) => {
             });
         }
 
-        // Auto-determine vendor from product (DO NOT trust client vendor parameter)
+        // Auto-determine vendor strictly from product in MongoDB (DO NOT trust client vendor parameter)
         const vendorId = product.vendor;
 
         // Auto-generate product embedding if missing

@@ -12,6 +12,7 @@ import AIAssistantPanel from '../../components/AIAssistantPanel';
 import CatalogQualityScore from '../../components/CatalogQualityScore';
 import AIInsightsWidget from '../../components/AIInsightsWidget';
 import LowStockAlert from '../../components/LowStockAlert';
+import RealtimeDashboardWidget from '../../components/RealtimeDashboardWidget';
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
@@ -184,6 +185,9 @@ export default function VendorDashboard() {
           <StatCard key={card.label} {...card} />
         ))}
       </div>
+
+      {/* Real-Time Sales & Live Transactions Feed */}
+      <RealtimeDashboardWidget />
 
       {/* Low Stock Alerts */}
       <LowStockAlert />

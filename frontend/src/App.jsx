@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Layouts
 import VendorLayout from './layouts/VendorLayout';
 import AdminLayout from './layouts/AdminLayout';
+import CustomerLayout from './layouts/CustomerLayout';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -18,6 +19,8 @@ import EditProduct from './pages/vendor/EditProduct';
 import VendorAnalytics from './pages/vendor/VendorAnalytics';
 import VendorProfile from './pages/vendor/VendorProfile';
 
+// Customer Pages
+import CustomerMarketplace from './pages/customer/CustomerMarketplace';
 import CustomerPurchases from './pages/customer/CustomerPurchases';
 
 // Admin Pages
@@ -32,6 +35,10 @@ function RootRedirect() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (role === 'customer') {
+    return <Navigate to="/marketplace" replace />;
   }
 
   return <Navigate to={role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'} replace />;
@@ -49,6 +56,30 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<VendorRegister />} />
 
+          {/* Customer Protected Routes */}
+          <Route
+            path="/marketplace"
+            element={
+              <ProtectedRoute requiredRole="customer">
+                <CustomerLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<CustomerMarketplace />} />
+          </Route>
+
+          <Route
+            path="/customer"
+            element={
+              <ProtectedRoute requiredRole="customer">
+                <CustomerLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/marketplace" replace />} />
+            <Route path="purchases" element={<CustomerPurchases />} />
+          </Route>
+
           {/* Vendor Protected Routes */}
           <Route
             path="/vendor"
@@ -64,7 +95,6 @@ export default function App() {
             <Route path="products/add" element={<AddProduct />} />
             <Route path="products/:id/edit" element={<EditProduct />} />
             <Route path="analytics" element={<VendorAnalytics />} />
-            <Route path="customer-purchases" element={<CustomerPurchases />} />
             <Route path="profile" element={<VendorProfile />} />
           </Route>
 
@@ -89,3 +119,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

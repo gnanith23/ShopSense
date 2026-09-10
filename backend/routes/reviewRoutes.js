@@ -17,7 +17,7 @@ const {
 
 // ==================== IMPORT AUTH MIDDLEWARE ====================
 
-const { protectVendor } = require("../middleware/authMiddleware");
+const { protectVendor, optionalCustomerAuth } = require("../middleware/authMiddleware");
 
 
 // ==================== CREATE ROUTER ====================
@@ -31,11 +31,11 @@ const router = express.Router();
 
 // Customer: Get eligible purchased products for a customer
 // GET /api/reviews/customer-purchases
-router.get("/customer-purchases", getCustomerPurchases);
+router.get("/customer-purchases", optionalCustomerAuth, getCustomerPurchases);
 
 // Public/Customer: Submit a new review (triggers purchase verification & auto LLM sentiment analysis)
 // POST /api/reviews
-router.post("/", createReview);
+router.post("/", optionalCustomerAuth, createReview);
 
 // Vendor Protected: Get vendor sentiment summary metrics
 // GET /api/reviews/vendor/sentiment-summary

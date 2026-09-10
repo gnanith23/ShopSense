@@ -8,8 +8,13 @@ const express = require("express");
 
 // Import transaction controller functions
 const {
-    createTransaction
+    createTransaction,
+    getMyPurchases,
+    getVendorTransactions
 } = require("../controllers/transactionController");
+
+// Import customer and vendor auth middleware
+const { optionalCustomerAuth, optionalVendorAuth } = require("../middleware/authMiddleware");
 
 
 // ==================== CREATE ROUTER ====================
@@ -19,13 +24,37 @@ const router = express.Router();
 
 
 // ================================================================
-// ==================== CREATE TRANSACTION =========================
+// ==================== TRANSACTION ROUTES =========================
 // ================================================================
 
+// GET /api/transactions/my-purchases
+// Returns customer completed purchases
+router.get(
+    "/my-purchases",
+    optionalCustomerAuth,
+    getMyPurchases
+);
+
+// GET /api/transactions/vendor
+// GET /api/transactions/vendor/:vendorId
+// Returns vendor completed transactions (latest sales)
+router.get(
+    "/vendor",
+    optionalVendorAuth,
+    getVendorTransactions
+);
+
+router.get(
+    "/vendor/:vendorId",
+    optionalVendorAuth,
+    getVendorTransactions
+);
+
 // POST /api/transactions
-// Creates a new transaction
+// Creates a new transaction (simulated purchase)
 router.post(
     "/",
+    optionalCustomerAuth,
     createTransaction
 );
 

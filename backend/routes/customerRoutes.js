@@ -9,8 +9,14 @@ const express = require("express");
 // Import customer controller functions
 const {
     createCustomer,
-    getCustomers
+    getCustomers,
+    customerLogin,
+    getCustomerProfile,
+    updateCustomerProfile
 } = require("../controllers/customerController");
+
+// Import auth middleware
+const { protectCustomer } = require("../middleware/authMiddleware");
 
 
 // ==================== CREATE ROUTER ====================
@@ -35,6 +41,29 @@ router.get(
 router.post(
     "/",
     createCustomer
+);
+
+// POST /api/customers/login
+// Customer authentication (email/ID)
+router.post(
+    "/login",
+    customerLogin
+);
+
+// GET /api/customers/me
+// Get authenticated customer's profile
+router.get(
+    "/me",
+    protectCustomer,
+    getCustomerProfile
+);
+
+// PUT /api/customers/me
+// Update authenticated customer's profile in MongoDB
+router.put(
+    "/me",
+    protectCustomer,
+    updateCustomerProfile
 );
 
 

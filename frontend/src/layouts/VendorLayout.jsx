@@ -10,7 +10,6 @@ const PAGE_TITLES = {
   '/vendor/catalog': 'My Catalog',
   '/vendor/products/add': 'Add Product',
   '/vendor/analytics': 'Analytics',
-  '/vendor/customer-purchases': 'Customer Portal — My Purchases',
   '/vendor/profile': 'Profile',
 };
 
