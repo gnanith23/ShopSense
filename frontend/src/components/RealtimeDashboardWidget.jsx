@@ -54,8 +54,12 @@ export default function RealtimeDashboardWidget() {
 
     function connectWebSocket() {
       try {
-        const wsHost = window.location.hostname || '127.0.0.1';
-        const wsUrl = `ws://${wsHost}:8000/ws/vendor/${vendorId}`;
+        // Use VITE_WS_URL if set at build time (production / EC2).
+        // Fall back to the browser's current hostname for local development.
+        const wsBase =
+          import.meta.env.VITE_WS_URL ||
+          `ws://${window.location.hostname || '127.0.0.1'}:8000`;
+        const wsUrl = `${wsBase}/ws/vendor/${vendorId}`;
         const ws = new WebSocket(wsUrl);
         socketRef.current = ws;
 
