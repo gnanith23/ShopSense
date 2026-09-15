@@ -3,6 +3,8 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
+const dns = require("dns");
+try { dns.setServers(["8.8.8.8", "1.1.1.1"]); } catch (e) {}
 const dotenv = require("dotenv");
 dotenv.config();
 

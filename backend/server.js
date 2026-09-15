@@ -10,6 +10,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 const aiRoutes = require("./routes/aiRoutes");
+const aiAgentRoutes = require("./routes/aiAgentRoutes");
+const { initAgentScheduler } = require("./services/agentScheduler");
 
 // ==================== IMPORT DATABASE CONFIGURATION ====================
 
@@ -95,6 +97,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/transactions", transactionRoutes);
 
 app.use("/api/ai", aiRoutes);
+app.use("/api/ai-agent", aiAgentRoutes);
 
 // ==================== MILESTONE 2 API ROUTES ====================
 
@@ -134,4 +137,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
 
     console.log(`ShopSense server running on port ${PORT}`);
+    // Start weekly autonomous vendor analysis agent scheduler
+    initAgentScheduler();
 });

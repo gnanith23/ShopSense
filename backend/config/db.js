@@ -1,5 +1,12 @@
-// Import Mongoose to connect our Node.js application to MongoDB
 const mongoose = require("mongoose");
+const dns = require("dns");
+
+// Use reliable DNS servers (Google / Cloudflare) to prevent querySrv ECONNREFUSED on Windows
+try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (err) {
+    // Ignore if not permitted
+}
 
 
 // ==================== DATABASE CONNECTION ====================

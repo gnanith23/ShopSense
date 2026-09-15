@@ -23,9 +23,17 @@ logging.basicConfig(
 logger = logging.getLogger("shopsense_realtime")
 
 app = FastAPI(
-    title="ShopSense Real-Time WebSocket Service",
-    description="Real-time sales event and dashboard notification service for ShopSense vendors",
-    version="1.0.0"
+    title="ShopSense Real-Time Service",
+    description="""
+### ShopSense Real-Time WebSocket & Notification Service
+
+This service sends instant notifications when a customer buys a product.
+- **REST Endpoints**: Check health and receive sale events from the Node.js backend.
+- **WebSocket Endpoint**: `ws://localhost:8000/ws/vendor/{vendor_id}` for live vendor dashboard alerts.
+    """,
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Enable CORS for frontend applications
@@ -125,8 +133,8 @@ class SaleEventPayload(BaseModel):
 # ==================== HTTP ENDPOINTS ============================
 # ================================================================
 
-@app.get("/")
-@app.get("/health")
+@app.get("/", tags=["Health"], summary="Check service status")
+@app.get("/health", tags=["Health"], summary="Health check endpoint")
 async def health_check():
     """Health check endpoint to verify that the FastAPI service is running."""
     total_connections = sum(len(conns) for conns in manager.active_connections.values())
@@ -139,11 +147,11 @@ async def health_check():
     }
 
 
-@app.post("/api/events/sale", status_code=status.HTTP_200_OK)
+@app.post("/api/events/sale", status_code=status.HTTP_200_OK, tags=["Sales Events"], summary="Send sale notification to vendor")
 async def receive_sale_event(event: SaleEventPayload):
     """
-    Webhook endpoint invoked by the Node.js/Express backend upon completed transaction.
-    Pushes real-time notification to the vendor's dashboard.
+    Webhook endpoint called by the Node.js/Express backend when a sale happens.
+    Sends a real-time notification to the vendor dashboard.
     """
     try:
         ts = event.timestamp or datetime.now(timezone.utc).isoformat()

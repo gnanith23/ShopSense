@@ -1,0 +1,15 @@
+node_modules
+dist
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.git
+.gitignore
+npm-debug.log
+.env
+backend/.env

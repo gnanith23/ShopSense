@@ -1,0 +1,73 @@
+name: ShopSense CI
+
+# Triggers: Run automatically on push to main or pull request targeting main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    # Service container: provides a real, local MongoDB instance for backend testing
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})' || mongo --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # Step 1: Check out repository source code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Step 3: Install root dependencies
+      - name: Install Root Dependencies
+        run: npm install
+
+      # Step 4: Install backend dependencies
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm install
+
+      # Step 5: Install frontend dependencies
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      # Step 6: Run backend tests against the local MongoDB service
+      - name: Run Backend Tests
+        env:
+          MONGO_URI: mongodb://127.0.0.1:27017/shopsense_ci_test
+          JWT_SECRET: ci_test_jwt_secret_shopsense_2026
+        run: |
+          cd backend
+          npm test
+
+      # Step 7: Run frontend code lint check
+      - name: Run Frontend Lint
+        run: |
+          cd frontend
+          npm run lint
+
+      # Step 8: Run frontend production build
+      - name: Run Frontend Build
+        run: |
+          cd frontend
+          npm run build
